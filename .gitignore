@@ -1,0 +1,16 @@
+# ide
+.idea/
+
+# scala build
+*.class
+*.log
+
+# sbt
+project/
+target/
+
+# data
+activity/
+
+# streaming checkpoints
+checkpoints/

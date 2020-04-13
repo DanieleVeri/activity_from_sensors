@@ -5,6 +5,7 @@ SPARK_DIR="/home/dan/spark-2.4.5-bin-hadoop2.7"
 $SPARK_DIR/bin/spark-submit                                             \
     --deploy-mode client                                                \
     --master local[4]                                                   \
+    --driver-memory 2g                                                  \
     --supervise                                                         \
     --conf spark.ui.port=36000                                          \
     --conf spark.serializer=org.apache.spark.serializer.KryoSerializer  \

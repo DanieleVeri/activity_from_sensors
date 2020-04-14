@@ -17,7 +17,7 @@ object Preprocessing
 
         // feature extraction
         val time_batch = (str: String) => {
-            (str.toLong / 10000).toString
+            (str.toLong / 30000).toString
         }
         val time_batch_UDF = functions.udf(time_batch)
         val acc_time_batched = acc_data.withColumn("Arrival_Time", time_batch_UDF(new ColumnName("Arrival_Time")))
@@ -51,17 +51,18 @@ object Preprocessing
         acc_aggregate.rdd.map(row_to_processed)
     }
 
-    def with_spark_core(sc: SparkContext, file_uri: String): Processed = {
+    def with_spark_core(sc: SparkContext, file_uri: String): Processed =
+    {
         val acc_string = sc.textFile(file_uri)
         val acc_array = acc_string.map(row => row.split(','))
         val acc_array_notnull = acc_array.filter(arr => arr(9) != "null" && arr(0) != "Index")
         val acc_array_time_batched = acc_array_notnull.map(arr => {
-            val time = arr(1).toLong / 10000 // 10 sec batch
+            val time = arr(1).toLong / 30000 // 30 sec batch
             arr(1) = time.toString
             arr
         })
         // group by: time, user, device, activity
-        val acc_grouped = acc_array_time_batched.groupBy(fields => (fields(1), fields(6),fields(8), fields(9)))
+        val acc_grouped = acc_array_time_batched.groupBy(fields => (fields(1), fields(6), fields(8), fields(9)))
         acc_grouped.persist(StorageLevel.MEMORY_ONLY)
 
         val acc_mean_xyz = acc_grouped.mapValues(sample_list => {

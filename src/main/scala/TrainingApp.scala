@@ -1,10 +1,11 @@
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
+import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier, MultilayerPerceptronClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
@@ -24,22 +25,59 @@ object TrainingApp
 
         //val acc_stats = Preprocessing.with_spark_core(ss.sparkContext, acc_file)
         val acc_stats = Preprocessing.with_spark_sql(ss, acc_file)
-        println(acc_stats.count())
+        val gyr_stats = Preprocessing.with_spark_sql(ss, gyr_file)
+        println(acc_stats.count(), gyr_stats.count())
 
         val struct = StructType(
-            StructField("label", StringType) ::
+            StructField("label0", StringType) ::
             StructField("features", VectorType) :: Nil)
+        val joined = acc_stats.join(gyr_stats)
+        val data = ss.createDataFrame(joined.map(it =>
+            Row(it._1._4, Vectors.dense(
+                it._2._1._1, it._2._1._2, it._2._1._3, it._2._1._4, it._2._1._5, it._2._1._6, it._2._1._7, it._2._1._8, it._2._1._9,
+                it._2._2._1, it._2._2._2, it._2._2._3, it._2._2._4, it._2._2._5, it._2._2._6, it._2._2._7, it._2._2._8, it._2._2._9))),
+                struct)
 
-        val data = ss.createDataFrame(acc_stats.map(it => Row(it._1._4,
-            Vectors.dense(it._2._1, it._2._2, it._2._3, it._2._4, it._2._5, it._2._6))), struct)
+/* ******************************************** Multilayer perceptron */
+        val indexer = new StringIndexer()
+            .setInputCol("label0")
+            .setOutputCol("label")
+            .fit(data)
+        val indexed = indexer.transform(data)
 
-        data.show(2)
+        data.show(20)
 
+        // Split the data into train and test
+        val splits = indexed.randomSplit(Array(0.6, 0.4), seed = 1234L)
+        val train = splits(0)
+        val test = splits(1)
+
+        val layers = Array[Int](18, 40, 6)
+
+        // create the trainer and set its parameters
+        val trainer = new MultilayerPerceptronClassifier()
+            .setLayers(layers)
+            .setBlockSize(128)
+            .setSeed(1234L)
+            .setMaxIter(100)
+        //trainer.labelCol = new Param[String]("label")
+
+        // train the model
+        val model = trainer.fit(train)
+
+        // compute accuracy on the test set
+        val result = model.transform(test)
+        val predictionAndLabels = result.select("prediction", "label")
+        val evaluator = new MulticlassClassificationEvaluator()
+            .setMetricName("accuracy")
+
+        println(s"Test set accuracy = ${evaluator.evaluate(predictionAndLabels)}")
+
+/* ****************************************** Decision tree
         val labelIndexer = new StringIndexer()
             .setInputCol("label")
             .setOutputCol("indexedLabel")
             .fit(data)
-        // Automatically identify categorical features, and index them.
         val featureIndexer = new VectorIndexer()
             .setInputCol("features")
             .setOutputCol("indexedFeatures")
@@ -71,7 +109,7 @@ object TrainingApp
         val predictions = model.transform(testData)
 
         // Select example rows to display.
-        predictions.select("predictedLabel", "label", "features").show(5)
+        predictions.select("predictedLabel", "label", "features").show(20)
 
         // Select (prediction, true label) and compute test error.
         val evaluator = new MulticlassClassificationEvaluator()
@@ -83,6 +121,8 @@ object TrainingApp
 
         val treeModel = model.stages(2).asInstanceOf[DecisionTreeClassificationModel]
         println(s"Learned classification tree model:\n ${treeModel.toDebugString}")
+
+ */
 
         scala.io.StdIn.readLine()
     }

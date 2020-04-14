@@ -9,7 +9,10 @@ import org.apache.spark.storage.StorageLevel
 
 object Preprocessing
 {
-    type Processed = RDD[((String, String, String, String), (Double, Double, Double, Double, Double, Double))]
+    type Processed = RDD[((String, String, String, String),
+        (Double, Double, Double, Double, Double, Double, Double, Double, Double))]
+
+    val TIME_BATCH = 10000
 
     def with_spark_sql(ss: SparkSession, file_uri: String): Processed =
     {
@@ -17,7 +20,7 @@ object Preprocessing
 
         // feature extraction
         val time_batch = (str: String) => {
-            (str.toLong / 30000).toString
+            (str.toLong / TIME_BATCH).toString
         }
         val time_batch_UDF = functions.udf(time_batch)
         val acc_time_batched = acc_data.withColumn("Arrival_Time", time_batch_UDF(new ColumnName("Arrival_Time")))
@@ -30,7 +33,10 @@ object Preprocessing
             functions.variance("z").alias("var_z"),
             functions.covar_pop("x", "y").alias("cov_xy"),
             functions.covar_pop("x", "z").alias("cov_xz"),
-            functions.covar_pop("y", "z").alias("cov_yz")
+            functions.covar_pop("y", "z").alias("cov_yz"),
+            functions.mean("x").alias("mean_x"),
+            functions.mean("y").alias("mean_y"),
+            functions.mean("z").alias("mean_z")
         )
 
         acc_aggregate.persist(StorageLevel.MEMORY_ONLY)
@@ -46,7 +52,10 @@ object Preprocessing
                 row.getAs[Double]("var_z"),
                 row.getAs[Double]("cov_xy"),
                 row.getAs[Double]("cov_xz"),
-                row.getAs[Double]("cov_yz")
+                row.getAs[Double]("cov_yz"),
+                row.getAs[Double]("mean_x"),
+                row.getAs[Double]("mean_y"),
+                row.getAs[Double]("mean_z")
             ))
         acc_aggregate.rdd.map(row_to_processed)
     }
@@ -57,7 +66,7 @@ object Preprocessing
         val acc_array = acc_string.map(row => row.split(','))
         val acc_array_notnull = acc_array.filter(arr => arr(9) != "null" && arr(0) != "Index")
         val acc_array_time_batched = acc_array_notnull.map(arr => {
-            val time = arr(1).toLong / 30000 // 30 sec batch
+            val time = arr(1).toLong / TIME_BATCH
             arr(1) = time.toString
             arr
         })
@@ -72,7 +81,7 @@ object Preprocessing
         })
 
         val acc_var_xyz = acc_grouped.join(acc_mean_xyz).mapValues(group => {
-            val sum_count = group._1.map(arr => (arr(3).toDouble, arr(4).toDouble, arr(5).toDouble, 0.0, 0.0, 0.0, 0)).
+            val sum_count = group._1.map(arr => (arr(3).toDouble, arr(4).toDouble, arr(5).toDouble, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)).
                 reduce((acm, it) => (
                     acm._1 + Math.pow(it._1 - group._2._1, 2),              // var x
                     acm._2 + Math.pow(it._2 - group._2._2, 2),              // var y
@@ -80,9 +89,13 @@ object Preprocessing
                     acm._4 + (it._1 - group._2._1) * (it._2 - group._2._2), // cov xy
                     acm._5 + (it._1 - group._2._1) * (it._3 - group._2._3), // cov xz
                     acm._6 + (it._2 - group._2._2) * (it._3 - group._2._3), // cov yz
-                    acm._7 + 1))
-            (sum_count._1 / sum_count._7, sum_count._2 / sum_count._7, sum_count._3 / sum_count._7,
-                sum_count._4 / sum_count._7, sum_count._5 / sum_count._7, sum_count._6 / sum_count._7)
+                    group._2._1,                                            // mean x
+                    group._2._2,                                            // mean y
+                    group._2._3,                                            // mean z
+                    acm._10 + 1))
+            (sum_count._1 / sum_count._10, sum_count._2 / sum_count._10, sum_count._3 / sum_count._10,
+                sum_count._4 / sum_count._10, sum_count._5 / sum_count._10, sum_count._6 / sum_count._10,
+                sum_count._7, sum_count._8, sum_count._9)
         })
 
         acc_var_xyz.persist(StorageLevel.MEMORY_ONLY)

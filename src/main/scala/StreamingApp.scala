@@ -13,6 +13,9 @@ object StreamingApp
     def main(args: Array[String]) 
     {
         val conf = new SparkConf()
+        val sc = new SparkContext(conf)
+        val ssc = new StreamingContext(sc, Seconds(1))
+        /*
         val checkpointDir = "./checkpoints"
         def createStreamingContext() = {
             val sc = new SparkContext(conf)
@@ -21,13 +24,14 @@ object StreamingApp
             ssc
         }
         val ssc = StreamingContext.getOrCreate(checkpointDir, createStreamingContext)
-        /*
-        val logFile = "/home/dan/test_spark/src/main/scala/SimpleApp.scala" // Should be some file on your system
-        val logData = sc.textFile("file://"+logFile).cache()
-        val numAs = logData.filter(line => line.contains("a")).count()
-        val numBs = logData.filter(line => line.contains("b")).count()
-        println(s"Lines with a: $numAs, Lines with b: $numBs")
         */
-        ssc.stop()
+        val classifier_params = "file:///home/dan/activity_from_sensors/params"
+
+        // local machine
+        val lines = ssc.socketTextStream("localhost", 7777) // Filter our DStream for lines with "error"
+        lines.print()
+
+        ssc.start()
+        ssc.awaitTermination()
     }
 }

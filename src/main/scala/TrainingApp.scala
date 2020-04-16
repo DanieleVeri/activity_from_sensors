@@ -20,6 +20,7 @@ object TrainingApp
         val ss = SparkSession.builder().config(conf).getOrCreate()
 
         // TODO: take from program args
+        val classifier_params = "file:///home/dan/activity_from_sensors/params"
         val acc_file = "file:///home/dan/activity_from_sensors/data/acc00.csv"
         val gyr_file = "file:///home/dan/activity_from_sensors/data/gyr00.csv"
 
@@ -72,6 +73,8 @@ object TrainingApp
             .setMetricName("accuracy")
 
         println(s"Test set accuracy = ${evaluator.evaluate(predictionAndLabels)}")
+
+        model.save(classifier_params)
 
 /* ****************************************** Decision tree
         val labelIndexer = new StringIndexer()

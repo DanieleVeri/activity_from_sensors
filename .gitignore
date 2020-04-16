@@ -11,6 +11,7 @@ target/
 
 # data
 data/
+!params/data/
 
 # streaming checkpoints
 checkpoints/

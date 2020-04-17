@@ -33,21 +33,15 @@ object TrainingApp
             StructField("label0", StringType) ::
             StructField("features", VectorType) :: Nil)
         val joined = acc_stats.join(gyr_stats)
-        val data = ss.createDataFrame(joined.map(it =>
-            Row(it._1._4, Vectors.dense(
-                it._2._1._1, it._2._1._2, it._2._1._3, it._2._1._4, it._2._1._5, it._2._1._6, it._2._1._7, it._2._1._8, it._2._1._9,
-                it._2._2._1, it._2._2._2, it._2._2._3, it._2._2._4, it._2._2._5, it._2._2._6, it._2._2._7, it._2._2._8, it._2._2._9))),
-                struct)
-
+        val data = ss.createDataFrame(joined.map(it => Row(it._1._4, Vectors.dense(it._2._1 ++ it._2._2))),  struct)
+// TODO: classifiers in a different file
 /* ******************************************** Multilayer perceptron */
         val indexer = new StringIndexer()
             .setInputCol("label0")
             .setOutputCol("label")
             .fit(data)
         val indexed = indexer.transform(data)
-
         data.show(20)
-
         // Split the data into train and test
         val splits = indexed.randomSplit(Array(0.6, 0.4), seed = 1234L)
         val train = splits(0)

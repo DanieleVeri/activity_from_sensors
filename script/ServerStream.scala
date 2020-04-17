@@ -1,31 +1,34 @@
-import java.net._
-import java.io._
-import scala.io.Source
+import java.io.{BufferedReader, FileReader, PrintStream}
+import java.net.ServerSocket
 
-// Simple server of filenames lines to localhost:port
-
+val filename1 = "/home/dan/activity_from_sensors/data/allenamento/xab2"
+val filename2 = "/home/dan/activity_from_sensors/data/allenamento/xae"
 val server = new ServerSocket(7777)
-val filename = "/path/to/file.csv"
 
 while (true) {
-  val s = server.accept()
+    val s = server.accept()
+    val out = new PrintStream(s.getOutputStream)
 
-  val out = new PrintStream(s.getOutputStream)
+    val file1 = new BufferedReader(new FileReader(filename1))
+    val file2 = new BufferedReader(new FileReader(filename2))
 
-  var last_time = 0L
-  val file = Source.fromFile(filename)
-
-  for (line <- file.getLines) {
-    val this_time = line.split(',')(1)
-    if (line.split(',')(0) != "Index") {
-      if (last_time != 0L) Thread.sleep(this_time.toLong - last_time)
-
-      println(line)
-      out.println(line)
-      out.flush()
-      last_time = this_time.toLong
+    var i = 0
+    while(true) {
+        var line: String = ""
+        if (i%2 == 0) {
+            Thread.sleep(1)
+            line = file1.readLine()
+        } else {
+            line = file2.readLine()
+        }
+        if (line.split(',')(0) != "Index") {
+            out.println(line)
+            out.flush()
+        }
+        i += 1
     }
-  }
-  file.close()
-  s.close()
+
+    file1.close()
+    file2.close()
+    s.close()
 }

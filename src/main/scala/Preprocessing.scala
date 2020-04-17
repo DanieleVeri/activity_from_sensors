@@ -5,12 +5,10 @@ import org.apache.spark.storage.StorageLevel
 
 // TODO: Use traits to define interface
 // TODO: More meaningful names
-// TODO: Double to float to reduce memory by half ?
 
 object Preprocessing
 {
-    type Processed = RDD[((String, String, String, String),
-        (Double, Double, Double, Double, Double, Double, Double, Double, Double))]
+    type Processed = RDD[((String, String, String, String), Array[Double])]
 
     val TIME_BATCH = 10000
 
@@ -47,7 +45,7 @@ object Preprocessing
                 row.getAs[String]("Device"),
                 row.getAs[String]("gt")
             ),
-            (   row.getAs[Double]("var_x"),
+            Array(row.getAs[Double]("var_x"),
                 row.getAs[Double]("var_y"),
                 row.getAs[Double]("var_z"),
                 row.getAs[Double]("cov_xy"),
@@ -93,7 +91,7 @@ object Preprocessing
                     group._2._2,                                            // mean y
                     group._2._3,                                            // mean z
                     acm._10 + 1))
-            (sum_count._1 / sum_count._10, sum_count._2 / sum_count._10, sum_count._3 / sum_count._10,
+            Array(sum_count._1 / sum_count._10, sum_count._2 / sum_count._10, sum_count._3 / sum_count._10,
                 sum_count._4 / sum_count._10, sum_count._5 / sum_count._10, sum_count._6 / sum_count._10,
                 sum_count._7, sum_count._8, sum_count._9)
         })

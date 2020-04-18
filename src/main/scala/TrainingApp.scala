@@ -21,8 +21,8 @@ object TrainingApp
 
         // TODO: take from program args
         val classifier_params = "file:///home/dan/activity_from_sensors/params"
-        val acc_file = "file:///home/dan/activity_from_sensors/data/acc00.csv"
-        val gyr_file = "file:///home/dan/activity_from_sensors/data/gyr00.csv"
+        val acc_file = "file:///home/dan/activity_from_sensors/data/acc_train.csv"
+        val gyr_file = "file:///home/dan/activity_from_sensors/data/gyr_train.csv"
 
         //val acc_stats = Preprocessing.with_spark_core(ss.sparkContext, acc_file)
         val acc_stats = Preprocessing.with_spark_sql(ss, acc_file)
@@ -43,7 +43,7 @@ object TrainingApp
         val indexed = indexer.transform(data)
         data.show(20)
         // Split the data into train and test
-        val splits = indexed.randomSplit(Array(0.6, 0.4), seed = 1234L)
+        val splits = indexed.randomSplit(Array(0.7, 0.3), seed = 1234L)
         val train = splits(0)
         val test = splits(1)
 

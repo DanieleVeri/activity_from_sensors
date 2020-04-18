@@ -68,8 +68,13 @@ object StreamingApp
     def extract_features(batch: RDD[String]): RDD[(String, Array[Double])] = {
         val acc_array = batch.map(row => row.split(','))
 
+        val hack = acc_array.map(arr => {
+            arr(6) = arr(6).concat(s"_${arr(9)}")
+            arr
+        })
+
         // group by: user
-        val acc_grouped = acc_array.groupBy(fields => fields(6))
+        val acc_grouped = hack.groupBy(fields => fields(6))
         acc_grouped.persist(StorageLevel.MEMORY_ONLY)
 
         val acc_mean_xyz = acc_grouped.mapValues(sample_list => {
@@ -79,7 +84,8 @@ object StreamingApp
         })
 
         val acc_var_xyz = acc_grouped.join(acc_mean_xyz).mapValues(group => {
-            val sum_count = group._1.map(arr => (arr(3).toDouble, arr(4).toDouble, arr(5).toDouble, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)).
+            val sum_count = group._1.
+                map(arr => (arr(3).toDouble, arr(4).toDouble, arr(5).toDouble, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)).
                 reduce((acm, it) => (
                     acm._1 + Math.pow(it._1 - group._2._1, 2),              // var x
                     acm._2 + Math.pow(it._2 - group._2._2, 2),              // var y

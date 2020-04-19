@@ -18,7 +18,9 @@ object StreamingApp
 {   // TODO: spark loglevel WARN
     def main(args: Array[String]) 
     {
-        val classifier_params = "file:///home/dan/activity_from_sensors/params"
+        val host = args(0)
+        val port = args(1).toInt
+        val classifier_params = args(2)
 
         val conf = new SparkConf()
         val ss = SparkSession.builder().config(conf).getOrCreate()
@@ -35,7 +37,7 @@ object StreamingApp
         val ssc = StreamingContext.getOrCreate(checkpointDir, createStreamingContext)
         */
 
-        val stream = ssc.socketTextStream("localhost", 7777)
+        val stream = ssc.socketTextStream(host, port)
 
         val acc_stream = stream.filter(s => s.endsWith("ACC"))
         val gyr_stream = stream.filter(s => s.endsWith("GYR"))

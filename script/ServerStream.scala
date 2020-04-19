@@ -10,7 +10,6 @@ while (true) {
 
     val file1 = new BufferedReader(new FileReader(filename1))
 
-    var i = 0
     while(true) {
         Thread.sleep(1)
         val line = file1.readLine()
@@ -18,7 +17,6 @@ while (true) {
             out.println(line)
             out.flush()
         }
-        i += 1
     }
 
     file1.close()

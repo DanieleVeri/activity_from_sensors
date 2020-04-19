@@ -20,9 +20,9 @@ object TrainingApp
         val ss = SparkSession.builder().config(conf).getOrCreate()
 
         // TODO: take from program args
-        val classifier_params = "file:///home/dan/activity_from_sensors/params"
-        val acc_file = "file:///home/dan/activity_from_sensors/data/acc_train.csv"
-        val gyr_file = "file:///home/dan/activity_from_sensors/data/gyr_train.csv"
+        val acc_file = args(0)
+        val gyr_file = args(1)
+        val classifier_params = args(2)
 
         //val acc_stats = Preprocessing.with_spark_core(ss.sparkContext, acc_file)
         val acc_stats = Preprocessing.with_spark_sql(ss, acc_file)

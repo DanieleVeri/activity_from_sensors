@@ -61,6 +61,7 @@ object Classifier
                 new DTClassifier(1234L)
             case "mlp_classifier" =>
                 new MLPClassifier(1234L, Array(18, 40, 6))
+            case _ => throw new IllegalArgumentException("Invalid classifier")
         }
     }
 }

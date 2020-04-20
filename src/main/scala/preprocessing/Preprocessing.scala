@@ -24,6 +24,7 @@ object Preprocessing
                 new PreprocessingWithCore(ss.sparkContext, time_batch = 10000, StorageLevel.MEMORY_ONLY)
             case "preprocess_sql" =>
                 new PreprocessingWithSql(ss, time_batch = 10000, StorageLevel.MEMORY_ONLY)
+            case _ => throw new IllegalArgumentException("Invalid preprocessor type")
         }
     }
 }

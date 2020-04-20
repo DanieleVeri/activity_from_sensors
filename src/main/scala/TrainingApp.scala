@@ -11,17 +11,17 @@ object TrainingApp
 {
     def main(args: Array[String])
     {
-        val conf = new SparkConf()
-        val ss = SparkSession.builder().config(conf).getOrCreate()
-
+        // Parse program args
         val acc_file = args(0)
         val gyr_file = args(1)
-
         val classifier_params_uri = args(2)
         val rev_label_uri = args(3)
-
         val preprocess_kind = args(4)
         val classifier_kind = args(5)
+
+        // Context build
+        val conf = new SparkConf()
+        val ss = SparkSession.builder().config(conf).getOrCreate()
 
         val preprocessor = Preprocessing.get_preprocessor(ss, preprocess_kind)
 

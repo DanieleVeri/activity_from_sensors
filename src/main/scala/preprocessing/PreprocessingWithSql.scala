@@ -2,7 +2,7 @@ package preprocessing
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.sql.{ColumnName, Row, SparkSession, functions}
+import org.apache.spark.sql.{ColumnName, DataFrame, Row, SparkSession, functions}
 import org.apache.spark.storage.StorageLevel
 
 class PreprocessingWithSql(val ss: SparkSession,
@@ -21,17 +21,7 @@ class PreprocessingWithSql(val ss: SparkSession,
 
         val notnull_data = time_batched.filter(row => row.getAs[String]("gt") != "null")
 
-        val features = notnull_data.groupBy("Arrival_Time", "User", "Device", "gt").agg(
-            functions.variance("x").alias("var_x"),
-            functions.variance("y").alias("var_y"),
-            functions.variance("z").alias("var_z"),
-            functions.covar_pop("x", "y").alias("cov_xy"),
-            functions.covar_pop("x", "z").alias("cov_xz"),
-            functions.covar_pop("y", "z").alias("cov_yz"),
-            functions.mean("x").alias("mean_x"),
-            functions.mean("y").alias("mean_y"),
-            functions.mean("z").alias("mean_z")
-        )
+        val features = compute_variance(notnull_data, "Arrival_Time", "User", "Device", "gt")
 
         val row_to_processed = (row: Row) => (
             (row.getAs[String]("Arrival_Time"),
@@ -72,17 +62,7 @@ class PreprocessingWithSql(val ss: SparkSession,
         })
         val df = ss.createDataFrame(attach_label.map(arr => Row.fromSeq(arr.toSeq)), struct)
 
-        val features = df.groupBy("User").agg(
-            functions.variance("x").alias("var_x"),
-            functions.variance("y").alias("var_y"),
-            functions.variance("z").alias("var_z"),
-            functions.covar_pop("x", "y").alias("cov_xy"),
-            functions.covar_pop("x", "z").alias("cov_xz"),
-            functions.covar_pop("y", "z").alias("cov_yz"),
-            functions.mean("x").alias("mean_x"),
-            functions.mean("y").alias("mean_y"),
-            functions.mean("z").alias("mean_z")
-        )
+        val features = compute_variance(df, "User")
 
         val row_to_processed = (row: Row) => (
             row.getAs[String]("User"),
@@ -97,5 +77,20 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_z")))
 
         features.rdd.map(row_to_processed).persist(storage_level)
+    }
+
+    def compute_variance(data: DataFrame, group_cols: String*): DataFrame =
+    {
+        data.groupBy(group_cols.head, group_cols.tail: _*).agg(
+            functions.variance("x").alias("var_x"),
+            functions.variance("y").alias("var_y"),
+            functions.variance("z").alias("var_z"),
+            functions.covar_pop("x", "y").alias("cov_xy"),
+            functions.covar_pop("x", "z").alias("cov_xz"),
+            functions.covar_pop("y", "z").alias("cov_yz"),
+            functions.mean("x").alias("mean_x"),
+            functions.mean("y").alias("mean_y"),
+            functions.mean("z").alias("mean_z")
+        )
     }
 }

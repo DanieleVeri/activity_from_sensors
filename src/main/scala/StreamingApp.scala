@@ -20,11 +20,13 @@ object StreamingApp
         val rev_label_params = args(3)
         val preprocess_kind = args(4)
         val classifier_kind = args(5)
+        val out_file = args(6)
 
         // Context build
         val conf = new SparkConf()
         val ss = SparkSession.builder().config(conf).getOrCreate()
         val ssc = new StreamingContext(ss.sparkContext, Seconds(1))
+
         // with checkpoint recovery
         /*
         val checkpointDir = "file:///home/dan/activity_from_sensors/checkpoints"
@@ -62,6 +64,7 @@ object StreamingApp
         })
 
         predicted_stream.print()
+        predicted_stream.saveAsTextFiles(out_file, ss.sparkContext.applicationId)
 
         ssc.start()
         ssc.awaitTermination()

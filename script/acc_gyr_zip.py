@@ -3,9 +3,9 @@
 
 import pandas as pd
 
-in_acc_file = "../data/acc03.csv"
-in_gyr_file = "../data/gyr03.csv"
-out_combined_file = "../data/accgyr03.csv"
+in_acc_file = "../data/acc_test.csv"
+in_gyr_file = "../data/gyr_test.csv"
+out_combined_file = "../data/accgyr_stream.csv"
 
 names = "Index,Arrival_Time,Creation_Time,x,y,z,User,Model,Device,gt,Type".split(',')
 

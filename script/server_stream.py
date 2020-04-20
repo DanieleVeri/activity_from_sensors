@@ -20,6 +20,8 @@ with open(stream_file,'r') as f:
     print("streaming file",stream_file,"on port",port)
     try:
         conn, _ = serv.accept()
+        println("client connected")
+
         for line in f:
             time.sleep(0.001)
 

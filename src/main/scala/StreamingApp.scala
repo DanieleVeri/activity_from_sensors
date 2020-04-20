@@ -1,20 +1,14 @@
 import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.ml.classification.MultilayerPerceptronClassificationModel
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.Seconds
-import org.apache.spark.sql.functions.col
-import preprocessing.{Preprocessing, PreprocessingWithSql}
-import classification.{MLPClassifier,DTClassifier}
-
-import scala.collection.JavaConversions.seqAsJavaList
+import preprocessing.{Preprocessing, PreprocessingWithCore, PreprocessingWithSql}
+import classification.{DTModel, MLPModel, Model}
+//import scala.collection.JavaConversions.seqAsJavaList
 
 
 object StreamingApp
@@ -24,6 +18,7 @@ object StreamingApp
         val host = args(0)
         val port = args(1).toInt
         val classifier_params = args(2)
+        val rev_label_params = args(3)
 
         val conf = new SparkConf()
         val ss = SparkSession.builder().config(conf).getOrCreate()
@@ -53,8 +48,9 @@ object StreamingApp
         val acc_features = acc_windows.transform(batch => preprocessor.extract_streaming_features(batch))
         val gyr_features = gyr_windows.transform(batch => preprocessor.extract_streaming_features(batch))
 
-        val model = new MLPClassifier()
-        val classifier = ssc.sparkContext.broadcast(model.load_model(classifier_params))
+        //val model = new DTModel(classifier_params, rev_label_params)
+        val model = new MLPModel(classifier_params, rev_label_params)
+        val classifier = ssc.sparkContext.broadcast(model)
 
         val struct = StructType(StructField("user", StringType) :: StructField("features", VectorType) :: Nil)
 
@@ -64,7 +60,7 @@ object StreamingApp
                 struct)
 
             val result = classifier.value.transform(data)
-            result.select("user", "prediction").rdd
+            result.select("user", "predictedLabel").rdd
         })
 
         predicted_stream.print()

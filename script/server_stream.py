@@ -12,12 +12,9 @@ args = parser.parse_args()
 serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = int(args.port)
 serv.bind(('0.0.0.0', port))
-
-#serv.bind(('0.0.0.0', 10003))
 serv.listen(5)
 
 stream_file = args.file
-#stream_file = "acc00.csv"
 
 with open(stream_file,'r') as f:
     print("streaming file",stream_file,"on port",port)

@@ -1,9 +1,8 @@
 package classification
 
-import org.apache.spark.ml.classification.{MultilayerPerceptronClassificationModel, MultilayerPerceptronClassifier}
+import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 
-class MLPClassifier(override val seed: Long, val layers: Array[Int]) extends
-    Classifier[MultilayerPerceptronClassificationModel](seed)
+class MLPClassifier(override val seed: Long, val layers: Array[Int]) extends Classifier(seed)
 {
     override val trainer: MultilayerPerceptronClassifier =
         new MultilayerPerceptronClassifier()

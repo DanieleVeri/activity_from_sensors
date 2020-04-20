@@ -6,7 +6,7 @@ import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.DataFrame
 
 
-abstract class Classifier[ModelType <: MLWritable](val seed: Long)
+abstract class Classifier(val seed: Long)
 {
     val trainer: PipelineStage
 
@@ -47,7 +47,20 @@ abstract class Classifier[ModelType <: MLWritable](val seed: Long)
         val accuracy = evaluator.evaluate(predictions)
         println(s"Test accuracy = $accuracy")
 
-        model.stages(1).asInstanceOf[ModelType].save(params_uri)
+        model.stages(1).asInstanceOf[MLWritable].save(params_uri)
         model.stages(2).asInstanceOf[IndexToString].save(rev_label_uri)
+    }
+}
+
+object Classifier
+{
+    def get_classifier(kind: String): Classifier =
+    {
+        kind match {
+            case "dt_classifier" =>
+                new DTClassifier(1234L)
+            case "mlp_classifier" =>
+                new MLPClassifier(1234L, Array(18, 40, 6))
+        }
     }
 }

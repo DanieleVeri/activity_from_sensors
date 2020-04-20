@@ -33,8 +33,6 @@ class PreprocessingWithSql(val ss: SparkSession,
             functions.mean("z").alias("mean_z")
         )
 
-        features.persist(storage_level)
-
         val row_to_processed = (row: Row) => (
             (row.getAs[String]("Arrival_Time"),
             row.getAs[String]("User"),
@@ -49,7 +47,8 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_x"),
                 row.getAs[Double]("mean_y"),
                 row.getAs[Double]("mean_z")))
-        features.rdd.map(row_to_processed)
+
+        features.rdd.map(row_to_processed).persist(storage_level)
     }
 
     override def extract_streaming_features(batch: RDD[String]): RDD[(String, Array[Double])] =
@@ -85,8 +84,6 @@ class PreprocessingWithSql(val ss: SparkSession,
             functions.mean("z").alias("mean_z")
         )
 
-        features.persist(storage_level)
-
         val row_to_processed = (row: Row) => (
             row.getAs[String]("User"),
             Array(row.getAs[Double]("var_x"),
@@ -98,6 +95,7 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_x"),
                 row.getAs[Double]("mean_y"),
                 row.getAs[Double]("mean_z")))
-        features.rdd.map(row_to_processed)
+
+        features.rdd.map(row_to_processed).persist(storage_level)
     }
 }

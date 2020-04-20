@@ -1,7 +1,7 @@
 package preprocessing
 
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.{PairRDDFunctions, RDD}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
 import scala.reflect.ClassTag
@@ -25,9 +25,6 @@ class PreprocessingWithCore(val sc: SparkContext,
         })
 
         // group by: time, user, device, activity
-        val features = compute_variance[(String,String,String,String)](array_time_batched,
-            fields => (fields(1), fields(6), fields(8), fields(9)))
-        /*
         val grouped = array_time_batched.groupBy(fields => (fields(1), fields(6), fields(8), fields(9)))
         grouped.persist(storage_level)
 
@@ -56,9 +53,8 @@ class PreprocessingWithCore(val sc: SparkContext,
                 sum_count._4 / sum_count._10, sum_count._5 / sum_count._10, sum_count._6 / sum_count._10,
                 sum_count._7, sum_count._8, sum_count._9)
         })
-        */
+
         features.persist(storage_level)
-        features
     }
 
     def compute_variance[K: ClassTag](collection: RDD[Array[String]], group_lambda: Array[String] => K): RDD[(K, Array[Double])] =
@@ -104,8 +100,6 @@ class PreprocessingWithCore(val sc: SparkContext,
         })
 
         // group by: user
-        val features = compute_variance[String](name_label, fields => fields(6))
-        /*
         val grouped = name_label.groupBy(fields => fields(6))
         grouped.persist(storage_level)
 
@@ -134,7 +128,7 @@ class PreprocessingWithCore(val sc: SparkContext,
                 sum_count._4 / sum_count._10, sum_count._5 / sum_count._10, sum_count._6 / sum_count._10,
                 sum_count._7, sum_count._8, sum_count._9)
         })
-        */
-        features
+
+        features.persist(storage_level)
     }
 }

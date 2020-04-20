@@ -4,7 +4,7 @@ import org.apache.spark.ml.classification.MultilayerPerceptronClassificationMode
 
 class MLPModel(override val param_uri: String,
                override val rev_label_uri: String) extends
-    Model[MultilayerPerceptronClassificationModel](param_uri, rev_label_uri)
+    Model(param_uri, rev_label_uri)
 {
     override val model: MultilayerPerceptronClassificationModel =
         MultilayerPerceptronClassificationModel.load(param_uri)

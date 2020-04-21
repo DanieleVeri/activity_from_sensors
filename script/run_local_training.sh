@@ -1,8 +1,15 @@
 #!/bin/bash
 
+<<<<<<< Updated upstream
 SPARK_DIR=$1
 CLASSIFIER_PARAM="./params/mlp_03"
 REV_LABEL="./params/label_03"
+=======
+timestamp=$(date +%s)
+SPARK_DIR="/Users/buio/spark-2.4.5-bin-hadoop2.7"
+CLASSIFIER_PARAM="./params/mlp_${timestamp}"
+REV_LABEL="./params/label_${timestamp}"
+>>>>>>> Stashed changes
 ACC_FILE="./data/acc_train.csv"
 GYR_FILE="./data/gyr_train.csv"
 PREPROCESS_KIND="preprocess_core"
@@ -11,7 +18,12 @@ CLASSIFIER_KIND="mlp_classifier"
 $SPARK_DIR/bin/spark-submit                                             \
     --deploy-mode client                                                \
     --master local[4]                                                   \
+<<<<<<< Updated upstream
     --driver-memory 2g                                                  \
+=======
+    --driver-memory 12g                                                 \
+    --supervise                                                         \
+>>>>>>> Stashed changes
     --conf spark.ui.port=36000                                          \
     --conf spark.serializer=org.apache.spark.serializer.KryoSerializer  \
     --class "TrainingApp"                                               \

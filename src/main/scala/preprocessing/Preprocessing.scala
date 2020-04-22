@@ -10,6 +10,7 @@ trait Preprocessing
 
     val time_batch: Int
     val storage_level: StorageLevel
+    val partitions: Int
 
     def extract_features(file_uri : String): Processed
     def extract_streaming_features(batch: RDD[String]): RDD[(String, Array[Double])]
@@ -21,9 +22,17 @@ object Preprocessing
     {
         kind match {
             case "preprocess_core" =>
-                new PreprocessingWithCore(ss.sparkContext, time_batch = 10000, StorageLevel.MEMORY_ONLY)
+                new PreprocessingWithCore(ss.sparkContext,
+                    time_batch = 10000,
+                    storage_level = StorageLevel.MEMORY_ONLY,
+                    partitions = 100)
+
             case "preprocess_sql" =>
-                new PreprocessingWithSql(ss, time_batch = 10000, StorageLevel.MEMORY_ONLY)
+                new PreprocessingWithSql(ss,
+                    time_batch = 10000,
+                    storage_level = StorageLevel.MEMORY_ONLY,
+                    partitions = 100)
+
             case _ => throw new IllegalArgumentException("Invalid preprocessor type")
         }
     }

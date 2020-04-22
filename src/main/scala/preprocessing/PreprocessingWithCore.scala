@@ -1,6 +1,6 @@
 package preprocessing
 
-import org.apache.spark.SparkContext
+import org.apache.spark.{HashPartitioner, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
@@ -8,7 +8,8 @@ import scala.reflect.ClassTag
 
 class PreprocessingWithCore(val sc: SparkContext,
                             override val time_batch:Int,
-                            override val storage_level: StorageLevel) extends Preprocessing with Serializable
+                            override val storage_level: StorageLevel,
+                            override val partitions: Int) extends Preprocessing with Serializable
 {
     override def extract_features(file_uri: String): Processed =
     {
@@ -47,7 +48,7 @@ class PreprocessingWithCore(val sc: SparkContext,
 
     def compute_variance[K: ClassTag](collection: RDD[Array[String]], group_lambda: Array[String] => K): RDD[(K, Array[Double])] =
     {
-        val grouped = collection.groupBy(group_lambda)
+        val grouped = collection.groupBy(group_lambda, new HashPartitioner(partitions))
         grouped.persist(storage_level)
 
         val mean_xyz = grouped.mapValues(sample_list => {

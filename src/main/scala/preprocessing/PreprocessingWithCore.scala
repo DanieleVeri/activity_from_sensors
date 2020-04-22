@@ -48,7 +48,13 @@ class PreprocessingWithCore(val sc: SparkContext,
 
     def compute_variance[K: ClassTag](collection: RDD[Array[String]], group_lambda: Array[String] => K): RDD[(K, Array[Double])] =
     {
-        val grouped = collection.groupBy(group_lambda, new HashPartitioner(partitions))
+
+        val grouped =
+        if (partitions > 0)
+            collection.groupBy(group_lambda, new HashPartitioner(partitions))
+        else
+            collection.groupBy(group_lambda)
+
         grouped.persist(storage_level)
 
         val mean_xyz = grouped.mapValues(sample_list => {

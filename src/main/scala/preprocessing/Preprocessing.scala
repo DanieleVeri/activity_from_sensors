@@ -18,20 +18,21 @@ trait Preprocessing
 
 object Preprocessing
 {
-    def get_preprocessor(ss: SparkSession, kind: String): Preprocessing =
+    def get_preprocessor(ss: SparkSession, kind: String, partitions: Int): Preprocessing =
     {
+        println("with partitions:" + partitions)
         kind match {
             case "preprocess_core" =>
                 new PreprocessingWithCore(ss.sparkContext,
                     time_batch = 10000,
                     storage_level = StorageLevel.MEMORY_ONLY,
-                    partitions = 100)
+                    partitions)
 
             case "preprocess_sql" =>
                 new PreprocessingWithSql(ss,
                     time_batch = 10000,
                     storage_level = StorageLevel.MEMORY_ONLY,
-                    partitions = 100)
+                    partitions)
 
             case _ => throw new IllegalArgumentException("Invalid preprocessor type")
         }

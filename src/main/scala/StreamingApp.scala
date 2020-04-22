@@ -21,6 +21,7 @@ object StreamingApp
         val preprocess_kind = args(4)
         val classifier_kind = args(5)
         val out_file = args(6)
+        val partitions = args(7).toInt
 
         // Context build
         val conf = new SparkConf()
@@ -47,7 +48,7 @@ object StreamingApp
         val acc_windows = acc_stream.window(Seconds(10), Seconds(7))
         val gyr_windows = gyr_stream.window(Seconds(10), Seconds(7))
 
-        val preprocessor = Preprocessing.get_preprocessor(ss, preprocess_kind)
+        val preprocessor = Preprocessing.get_preprocessor(ss, preprocess_kind, partitions)
 
         val acc_features = acc_windows.transform(batch => preprocessor.extract_streaming_features(batch))
         val gyr_features = gyr_windows.transform(batch => preprocessor.extract_streaming_features(batch))

@@ -1,7 +1,9 @@
 package classification
+import java.io.IOException
+
 import org.apache.spark.ml.{Pipeline, PipelineStage}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{IndexToString, StringIndexer}
+import org.apache.spark.ml.feature.{IndexToString, StringIndexer, StringIndexerModel}
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.DataFrame
 
@@ -10,12 +12,28 @@ abstract class Classifier(val seed: Long)
 {
     val trainer: PipelineStage
 
-    def train(data: DataFrame, params_uri: String, rev_label_uri: String): Unit =
+    def train(data: DataFrame, params_uri: String, label_uri: String): Unit =
     {
-        val label_indexer = new StringIndexer()
-            .setInputCol("string_label")
-            .setOutputCol("label")
-            .fit(data)
+
+        var found_labels = false
+        var label_indexer : StringIndexerModel = null
+
+        try {
+            label_indexer = StringIndexerModel.load(label_uri)
+            found_labels = true
+        }
+        catch
+        {
+            case _: IOException =>
+            {
+                println("labels not found, forcing StringIndexer computation")
+                label_indexer = new StringIndexer()
+                  .setInputCol("string_label")
+                  .setOutputCol("label")
+                  .fit(data)
+            }
+        }
+
         println(s"Found labels: ${label_indexer.labels.mkString("[", ", ", "]")}")
 
         // Split the data into training and test sets (30% held out for testing).
@@ -47,8 +65,13 @@ abstract class Classifier(val seed: Long)
         val accuracy = evaluator.evaluate(predictions)
         println(s"Test accuracy = $accuracy")
 
-        model.stages(1).asInstanceOf[MLWritable].save(params_uri)
-        model.stages(2).asInstanceOf[IndexToString].save(rev_label_uri)
+        model.stages(1).asInstanceOf[MLWritable].write.overwrite().save(params_uri)
+
+        if (!found_labels)
+        {
+            model.stages(0).asInstanceOf[StringIndexerModel].save(label_uri)
+            model.stages(2).asInstanceOf[IndexToString].save(label_uri + "reverse")
+        }
     }
 }
 

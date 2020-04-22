@@ -40,10 +40,11 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_y"),
                 row.getAs[Double]("mean_z")))
 
-        features.rdd.
-            map(row_to_processed).
-            partitionBy(new HashPartitioner(partitions)).
-            persist(storage_level)
+        val features_rdd = features.rdd.map(row_to_processed)
+
+        if (partitions > 0) features_rdd.partitionBy(new HashPartitioner(partitions))
+
+        features_rdd.persist(storage_level)
     }
 
     override def extract_streaming_features(batch: RDD[String]): RDD[(String, Array[Double])] =

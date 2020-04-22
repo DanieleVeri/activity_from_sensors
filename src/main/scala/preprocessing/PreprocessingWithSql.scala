@@ -1,5 +1,6 @@
 package preprocessing
 
+import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{ColumnName, DataFrame, Row, SparkSession, functions}
@@ -7,7 +8,8 @@ import org.apache.spark.storage.StorageLevel
 
 class PreprocessingWithSql(val ss: SparkSession,
                            override val time_batch:Int,
-                           override val storage_level: StorageLevel) extends Preprocessing with Serializable
+                           override val storage_level: StorageLevel,
+                           override val partitions: Int) extends Preprocessing with Serializable
 {
     override def extract_features(file_uri: String): Processed =
     {
@@ -38,7 +40,10 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_y"),
                 row.getAs[Double]("mean_z")))
 
-        features.rdd.map(row_to_processed).persist(storage_level)
+        features.rdd.
+            map(row_to_processed).
+            partitionBy(new HashPartitioner(partitions)).
+            persist(storage_level)
     }
 
     override def extract_streaming_features(batch: RDD[String]): RDD[(String, Array[Double])] =
@@ -76,7 +81,10 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_y"),
                 row.getAs[Double]("mean_z")))
 
-        features.rdd.map(row_to_processed).persist(storage_level)
+        features.rdd.
+            map(row_to_processed).
+            partitionBy(new HashPartitioner(partitions)).
+            persist(storage_level)
     }
 
     def compute_variance(data: DataFrame, group_cols: String*): DataFrame =

@@ -11,4 +11,4 @@ spark-submit                                                            \
     s3://spark.jars/params/mlp_00                                       \
     s3://spark.jars/params/lbl_00                                       \
     preprocess_sql                                                      \
-    mlp_classifier                                                      \
+    mlp_classifier

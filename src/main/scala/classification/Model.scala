@@ -22,9 +22,9 @@ object Model
     def get_model(kind: String, params_uri: String, label_uri: String): Model =
     {
         kind match {
-            case "dt_model" =>
+            case "dt" =>
                 new DTModel(params_uri, label_uri)
-            case "mlp_model" =>
+            case "mlp" =>
                 new MLPModel(params_uri, label_uri)
             case _ => throw new IllegalArgumentException("Invalid model type")
         }

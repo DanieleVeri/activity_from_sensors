@@ -1,14 +1,15 @@
 #!/bin/bash
 
 SPARK_DIR=$1
+
 CLASSIFIER_PARAM="./params/mlp_05"
 REV_LABEL="./params/label_05"
 HOST="localhost"
 PORT=7777
-PREPROCESS_KIND="preprocess_core"
-MODEL_KIND="mlp_model"
+PREPROCESS_KIND="core"
+MODEL_KIND="mlp"
 OUT_FILE="./data/processed_stream"
-PARTITIONS=0
+PARTITIONS=100
 
 $SPARK_DIR/bin/spark-submit                                             \
     --deploy-mode client                                                \

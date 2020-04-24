@@ -13,15 +13,8 @@ object StreamingApp
 {
     def main(args: Array[String]) 
     {
-        // Parse program args
-        val host = args(0)
-        val port = args(1).toInt
-        val classifier_params = args(2)
-        val rev_label_params = args(3)
-        val preprocess_kind = args(4)
-        val classifier_kind = args(5)
-        val out_file = args(6)
-        val partitions = args(7).toInt
+        val parsed_args = new ArgsParser(args)
+        println(parsed_args)
 
         // Context build
         val conf = new SparkConf()
@@ -40,7 +33,7 @@ object StreamingApp
         val ssc = StreamingContext.getOrCreate(checkpointDir, createStreamingContext)
         */
 
-        val stream = ssc.socketTextStream(host, port)
+        val stream = ssc.socketTextStream(parsed_args.server_host, parsed_args.server_port)
 
         val acc_stream = stream.filter(s => s.endsWith("ACC"))
         val gyr_stream = stream.filter(s => s.endsWith("GYR"))
@@ -48,12 +41,12 @@ object StreamingApp
         val acc_windows = acc_stream.window(Seconds(10), Seconds(7))
         val gyr_windows = gyr_stream.window(Seconds(10), Seconds(7))
 
-        val preprocessor = Preprocessing.get_preprocessor(ss, preprocess_kind, partitions)
+        val preprocessor = Preprocessing.get_preprocessor(ss, parsed_args.preprocess_type, parsed_args.partitions)
 
         val acc_features = acc_windows.transform(batch => preprocessor.extract_streaming_features(batch))
         val gyr_features = gyr_windows.transform(batch => preprocessor.extract_streaming_features(batch))
 
-        val model = Model.get_model(classifier_kind, classifier_params, rev_label_params)
+        val model = Model.get_model(parsed_args.classifier_type, parsed_args.model_uri, parsed_args.label_uri)
         val broadcast_model = ssc.sparkContext.broadcast(model)
 
         val struct = StructType(StructField("user", StringType) :: StructField("features", VectorType) :: Nil)
@@ -65,9 +58,30 @@ object StreamingApp
         })
 
         predicted_stream.print()
-        predicted_stream.saveAsTextFiles(out_file, ss.sparkContext.applicationId)
+        predicted_stream.saveAsTextFiles(parsed_args.out_uri, ss.sparkContext.applicationId)
 
         ssc.start()
         ssc.awaitTermination()
+    }
+
+    class ArgsParser(args: Array[String]) {
+        val server_host: String = args(0)
+        val server_port: Int = args(1).toInt
+        val model_uri: String = args(2)
+        val label_uri: String = args(3)
+        val preprocess_type: String = args(4)
+        val classifier_type: String = args(5)
+        val out_uri: String = args(6)
+        val partitions: Int = args(7).toInt
+
+        override def toString: String = s"Configuration:\n " +
+            s"server host: $server_host\n " +
+            s"server port: $server_port\n " +
+            s"model file URI: $model_uri\n " +
+            s"label file URI: $label_uri\n " +
+            s"preprocess type: $preprocess_type\n " +
+            s"classifier_type: $classifier_type\n " +
+            s"stream output URI: $out_uri\n " +
+            s"partitions: $partitions"
     }
 }

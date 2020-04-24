@@ -6,7 +6,7 @@ spark-submit                                                            \
     --conf spark.serializer=org.apache.spark.serializer.KryoSerializer  \
     --class StreamingApp                                                \
     s3://spark.jars/activity_from_sensors_2.11-1.0.jar                  \
-    localhost                                                           \
+    *eth0 ip*                                                           \
     7777                                                                \
     s3://spark.jars/params/mlp_00                                       \
     s3://spark.jars/params/lbl_00                                       \

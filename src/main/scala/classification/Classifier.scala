@@ -56,7 +56,7 @@ abstract class Classifier(val seed: Long)
         val predictions = model.transform(test)
 
         // Select example rows to display.
-        predictions.select("predictedLabel", "label", "features").show(20)
+        predictions.select("string_label", "predictedLabel", "features").show(20, false)
 
         // Select (prediction, true label) and compute test error.
         val evaluator = new MulticlassClassificationEvaluator()
@@ -70,7 +70,7 @@ abstract class Classifier(val seed: Long)
         if (!found_labels)
         {
             model.stages(0).asInstanceOf[StringIndexerModel].save(label_uri)
-            model.stages(2).asInstanceOf[IndexToString].save(label_uri + "reverse")
+            model.stages(2).asInstanceOf[IndexToString].save(label_uri + "_reverse")
         }
     }
 }
@@ -80,9 +80,9 @@ object Classifier
     def get_classifier(kind: String): Classifier =
     {
         kind match {
-            case "dt_classifier" =>
+            case "dt" =>
                 new DTClassifier(1234L)
-            case "mlp_classifier" =>
+            case "mlp" =>
                 new MLPClassifier(1234L, Array(18, 40, 6))
             case _ => throw new IllegalArgumentException("Invalid classifier")
         }

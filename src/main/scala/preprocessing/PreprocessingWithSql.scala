@@ -1,22 +1,23 @@
 package preprocessing
 
-import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{ColumnName, DataFrame, Row, SparkSession, functions}
 import org.apache.spark.storage.StorageLevel
+
 
 class PreprocessingWithSql(val ss: SparkSession,
                            override val time_batch:Int,
                            override val storage_level: StorageLevel,
                            override val partitions: Int) extends Preprocessing with Serializable
 {
-    override def extract_features(file_uri: String): Processed =
+    override def extract_features(file_uri: String): Processed[(String, String, String, String)] =
     {
         val data = ss.read.format("csv").option("header", "true").load(file_uri)
 
+        val local_time_batch = time_batch
         val time_batch_lambda = (str: String) => {
-            (str.toLong / time_batch).toString
+            (str.toLong / local_time_batch).toString
         }
         val time_batch_UDF = functions.udf(time_batch_lambda)
         val time_batched = data.withColumn("Arrival_Time", time_batch_UDF(new ColumnName("Arrival_Time")))
@@ -41,13 +42,10 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_z")))
 
         val features_rdd = features.rdd.map(row_to_processed)
-
-        if (partitions > 0) features_rdd.partitionBy(new HashPartitioner(partitions))
-
         features_rdd.persist(storage_level)
     }
 
-    override def extract_streaming_features(batch: RDD[String]): RDD[(String, Array[Double])] =
+    override def extract_streaming_features(batch: RDD[String]): Processed[String] =
     {
         val struct = StructType(
             StructField("Index", StringType) ::
@@ -82,10 +80,8 @@ class PreprocessingWithSql(val ss: SparkSession,
                 row.getAs[Double]("mean_y"),
                 row.getAs[Double]("mean_z")))
 
-        features.rdd.
-            map(row_to_processed).
-            partitionBy(new HashPartitioner(partitions)).
-            persist(storage_level)
+        val features_rdd = features.rdd.map(row_to_processed)
+        features_rdd.persist(storage_level)
     }
 
     def compute_variance(data: DataFrame, group_cols: String*): DataFrame =

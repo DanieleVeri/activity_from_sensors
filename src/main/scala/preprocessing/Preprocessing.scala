@@ -6,32 +6,31 @@ import org.apache.spark.storage.StorageLevel
 
 trait Preprocessing
 {
-    type Processed = RDD[((String, String, String, String), Array[Double])]
+    type Processed[KeyType] = RDD[(KeyType, Array[Double])]
 
     val time_batch: Int
     val storage_level: StorageLevel
     val partitions: Int
 
-    def extract_features(file_uri : String): Processed
-    def extract_streaming_features(batch: RDD[String]): RDD[(String, Array[Double])]
+    def extract_features(file_uri : String): Processed[(String, String, String, String)]
+    def extract_streaming_features(batch: RDD[String]): Processed[String]
 }
 
 object Preprocessing
 {
     def get_preprocessor(ss: SparkSession, kind: String, partitions: Int): Preprocessing =
     {
-        println("with partitions:" + partitions)
         kind match {
-            case "preprocess_core" =>
+            case "core" =>
                 new PreprocessingWithCore(ss.sparkContext,
                     time_batch = 10000,
-                    storage_level = StorageLevel.MEMORY_ONLY,
+                    storage_level = StorageLevel.MEMORY_AND_DISK,
                     partitions)
 
-            case "preprocess_sql" =>
+            case "sql" =>
                 new PreprocessingWithSql(ss,
                     time_batch = 10000,
-                    storage_level = StorageLevel.MEMORY_ONLY,
+                    storage_level = StorageLevel.MEMORY_AND_DISK,
                     partitions)
 
             case _ => throw new IllegalArgumentException("Invalid preprocessor type")

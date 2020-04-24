@@ -1,11 +1,12 @@
 import socket
 import time
 import argparse
+from contextlib import ExitStack
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-p","--port", help="the port where to serve")
-parser.add_argument("-f","--file", help="the file to serve")
+parser.add_argument('-p','--port', help='the port where to serve')
+parser.add_argument('-f','--files', nargs='+', help='the file(s) to serve')
 
 args = parser.parse_args()
 
@@ -14,22 +15,27 @@ port = int(args.port)
 serv.bind(('0.0.0.0', port))
 serv.listen(5)
 
-stream_file = args.file
+stream_files = args.files
 
-with open(stream_file,'r') as f:
-    print("streaming file",stream_file,"on port",port)
-    try:
-        conn, addr = serv.accept()
-        print("client connected",addr)
+print('streaming files', *stream_files, 'on port', port)
+print('waiting for client...')
+try:
+    conn, addr = serv.accept()
+    print('client', addr, 'connected')
 
+    with ExitStack() as stack:
+        files = [stack.enter_context(open(fname)) for fname in stream_files]
 
-        for line in f:
-            time.sleep(0.001)
+        for line in files[0]:
+            lines = [line]
+            for f in files[1:]:
+                lines.append(next(f))
 
-            encoded = line.encode("UTF-8")
-            conn.sendall(encoded)
+            time.sleep(0.001 / len(files))
 
-    finally:
-        conn.close()
-        serv.close()
-        print('client disconnected')
+            [conn.send(line.encode('UTF-8')) for line in lines]
+
+finally:
+    conn.close()
+    serv.close()
+    print('client disconnected')

@@ -74,14 +74,14 @@ object StreamingApp
         val out_uri: String = args(6)
         val partitions: Int = args(7).toInt
 
-        override def toString: String = s"Configuration:\n " +
-            s"server host: $server_host\n " +
-            s"server port: $server_port\n " +
-            s"model file URI: $model_uri\n " +
-            s"label file URI: $label_uri\n " +
-            s"preprocess type: $preprocess_type\n " +
-            s"classifier_type: $classifier_type\n " +
-            s"stream output URI: $out_uri\n " +
-            s"partitions: $partitions"
+        override def toString: String = s"Configuration:\n" +
+            s"  server host: $server_host\n" +
+            s"  server port: $server_port\n" +
+            s"  model file URI: $model_uri\n" +
+            s"  label file URI: $label_uri\n" +
+            s"  preprocess type: $preprocess_type\n" +
+            s"  classifier_type: $classifier_type\n" +
+            s"  stream output URI: $out_uri\n" +
+            s"  partitions: $partitions"
     }
 }

@@ -3,7 +3,7 @@ import java.io.IOException
 
 import org.apache.spark.ml.{Pipeline, PipelineStage}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{IndexToString, StringIndexer, StringIndexerModel}
+import org.apache.spark.ml.feature.{IndexToString, MinMaxScaler, StringIndexer, StringIndexerModel}
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.DataFrame
 
@@ -16,7 +16,7 @@ abstract class Classifier(val seed: Long)
     {
 
         var found_labels = false
-        var label_indexer : StringIndexerModel = null
+        var label_indexer: StringIndexerModel = null
 
         try {
             label_indexer = StringIndexerModel.load(label_uri)
@@ -33,8 +33,9 @@ abstract class Classifier(val seed: Long)
                   .fit(data)
             }
         }
-
         println(s"Found labels: ${label_indexer.labels.mkString("[", ", ", "]")}")
+
+        val scaler = new MinMaxScaler().setInputCol("base_features").setOutputCol("features").fit(data)
 
         // Split the data into training and test sets (30% held out for testing).
         val Array(training, test) = data.randomSplit(Array(0.7, 0.3), seed)
@@ -47,7 +48,7 @@ abstract class Classifier(val seed: Long)
 
         // Chain indexers and tree in a Pipeline.
         val pipeline = new Pipeline()
-            .setStages(Array(label_indexer, trainer, labelConverter))
+            .setStages(Array(label_indexer, scaler, trainer, labelConverter))
 
         // Train model. This also runs the indexers.
         val model = pipeline.fit(training)
@@ -56,7 +57,7 @@ abstract class Classifier(val seed: Long)
         val predictions = model.transform(test)
 
         // Select example rows to display.
-        predictions.select("string_label", "predictedLabel", "features").show(20, false)
+        predictions.select("string_label", "predictedLabel", "features").show(20)
 
         // Select (prediction, true label) and compute test error.
         val evaluator = new MulticlassClassificationEvaluator()
@@ -65,12 +66,12 @@ abstract class Classifier(val seed: Long)
         val accuracy = evaluator.evaluate(predictions)
         println(s"Test accuracy = $accuracy")
 
-        model.stages(1).asInstanceOf[MLWritable].write.overwrite().save(params_uri)
+        model.stages(2).asInstanceOf[MLWritable].write.overwrite().save(params_uri)
 
         if (!found_labels)
         {
             model.stages(0).asInstanceOf[StringIndexerModel].save(label_uri)
-            model.stages(2).asInstanceOf[IndexToString].save(label_uri + "_reverse")
+            model.stages(3).asInstanceOf[IndexToString].save(label_uri + "_reverse")
         }
     }
 }
@@ -83,7 +84,7 @@ object Classifier
             case "dt" =>
                 new DTClassifier(1234L)
             case "mlp" =>
-                new MLPClassifier(1234L, Array(18, 40, 6))
+                new MLPClassifier(1234L, Array(30, 60, 6))
             case _ => throw new IllegalArgumentException("Invalid classifier")
         }
     }

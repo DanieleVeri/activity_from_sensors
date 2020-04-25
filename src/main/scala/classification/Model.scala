@@ -8,7 +8,7 @@ abstract class Model(val param_uri: String, val label_uri: String)
 {
     val model: Transformer
 
-    val label: IndexToString = IndexToString.load(label_uri + "reverse")
+    val label: IndexToString = IndexToString.load(label_uri + "_reverse")
 
     def transform(data: DataFrame): DataFrame =
     {

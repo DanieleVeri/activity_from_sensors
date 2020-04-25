@@ -8,6 +8,6 @@ class MLPClassifier(override val seed: Long, val layers: Array[Int]) extends Cla
         new MultilayerPerceptronClassifier()
             .setLayers(layers)
             .setBlockSize(128)
-            .setMaxIter(100)
+            .setMaxIter(1000)
             .setSeed(seed)
 }

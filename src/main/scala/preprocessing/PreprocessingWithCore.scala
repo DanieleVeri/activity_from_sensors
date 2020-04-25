@@ -54,9 +54,9 @@ class PreprocessingWithCore(val sc: SparkContext,
 
         val mean_init = Array.ofDim[Double](4)
         val means = pairs.foldByKey(mean_init, partitions / 5)((acm, it) => {
-            acm(0) += it(0)
-            acm(1) += it(1)
-            acm(2) += it(2)
+            acm(0) += it(0)                                                                     // mean x
+            acm(1) += it(1)                                                                     // mean y
+            acm(2) += it(2)                                                                     // mean z
             acm(3) += 1
             acm
         }).mapValues(acm => {
@@ -68,12 +68,12 @@ class PreprocessingWithCore(val sc: SparkContext,
 
         val var_init = (Array.ofDim[Double](10), Array.emptyDoubleArray)
         val variances = pairs.join(means).foldByKey(var_init, partitions / 5)((acm, it) => {
-            acm._1(0) += pow(it._1(0) - it._2(0), 2)
-            acm._1(1) += pow(it._1(1) - it._2(1), 2)
-            acm._1(2) += pow(it._1(2) - it._2(2), 2)
-            acm._1(3) += (it._1(0) - it._2(0)) * (it._1(1) - it._2(1))
-            acm._1(4) += (it._1(0) - it._2(0)) * (it._1(2) - it._2(2))
-            acm._1(5) += (it._1(1) - it._2(1)) * (it._1(2) - it._2(2))
+            acm._1(0) += pow(it._1(0) - it._2(0), 2)                                            // var x
+            acm._1(1) += pow(it._1(1) - it._2(1), 2)                                            // var y
+            acm._1(2) += pow(it._1(2) - it._2(2), 2)                                            // var z
+            acm._1(3) += (it._1(0) - it._2(0)) * (it._1(1) - it._2(1))                          // cov xy
+            acm._1(4) += (it._1(0) - it._2(0)) * (it._1(2) - it._2(2))                          // cov xz
+            acm._1(5) += (it._1(1) - it._2(1)) * (it._1(2) - it._2(2))                          // cov yz
             acm._1(6) = it._2(3)
             acm._1(7) = it._2(0)
             acm._1(8) = it._2(1)
@@ -91,12 +91,12 @@ class PreprocessingWithCore(val sc: SparkContext,
 
         val std_moments_init = (Array.ofDim[Double](15), Array.emptyDoubleArray)
         val std_moments = pairs.join(variances).foldByKey(std_moments_init, partitions / 5)((acm, it) => {
-            acm._1(0) += pow((it._1(0) - it._2(7)) / sqrt(it._2(0)), 3)
-            acm._1(1) += pow((it._1(1) - it._2(8)) / sqrt(it._2(1)), 3)
-            acm._1(2) += pow((it._1(2) - it._2(9)) / sqrt(it._2(2)), 3)
-            acm._1(3) += pow((it._1(0) - it._2(7)) / sqrt(it._2(0)), 4)
-            acm._1(4) += pow((it._1(1) - it._2(8)) / sqrt(it._2(1)), 4)
-            acm._1(5) += pow((it._1(2) - it._2(9)) / sqrt(it._2(2)), 4)
+            acm._1(0) += pow((it._1(0) - it._2(7)) / sqrt(it._2(0)), 3)                        // skewness x
+            acm._1(1) += pow((it._1(1) - it._2(8)) / sqrt(it._2(1)), 3)                        // skewness y
+            acm._1(2) += pow((it._1(2) - it._2(9)) / sqrt(it._2(2)), 3)                        // skewness z
+            acm._1(3) += pow((it._1(0) - it._2(7)) / sqrt(it._2(0)), 4)                        // kurtosis x
+            acm._1(4) += pow((it._1(1) - it._2(8)) / sqrt(it._2(1)), 4)                        // kurtosis y
+            acm._1(5) += pow((it._1(2) - it._2(9)) / sqrt(it._2(2)), 4)                        // kurtosis z
             acm._1(6) = it._2(0)
             acm._1(7) = it._2(1)
             acm._1(8) = it._2(2)

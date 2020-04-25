@@ -2,8 +2,8 @@
 
 SPARK_DIR=$1
 
-CLASSIFIER_PARAM="./params/mlp_05"
-REV_LABEL="./params/label_05"
+CLASSIFIER_PARAM="./params/mlp_60"
+REV_LABEL="./params/labels"
 HOST="localhost"
 PORT=7777
 PREPROCESS_KIND="core"

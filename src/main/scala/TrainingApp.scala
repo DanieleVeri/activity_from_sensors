@@ -3,7 +3,7 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import preprocessing.{Preprocessing, PreprocessingWithCore}
+import preprocessing.Preprocessing
 import org.apache.spark.sql.SparkSession
 import classification.Classifier
 
@@ -17,7 +17,6 @@ object TrainingApp
 
         // Context build
         val conf = new SparkConf()
-        conf.registerKryoClasses(Array(classOf[PreprocessingWithCore]))
         val ss = SparkSession.builder().config(conf).getOrCreate()
 
         val run_mode = conf.get("spark.submit.deployMode")

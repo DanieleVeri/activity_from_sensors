@@ -50,6 +50,7 @@ abstract class Classifier(val seed: Long)
         val pipeline = new Pipeline()
             .setStages(Array(label_indexer, scaler, trainer, labelConverter))
 
+
         // Train model. This also runs the indexers.
         val model = pipeline.fit(training)
 
@@ -66,7 +67,9 @@ abstract class Classifier(val seed: Long)
         val accuracy = evaluator.evaluate(predictions)
         println(s"Test accuracy = $accuracy")
 
+        // Save all trainer params (and hyperparams)
         model.stages(2).asInstanceOf[MLWritable].write.overwrite().save(params_uri)
+        model.stages(1).asInstanceOf[MLWritable].write.overwrite().save(params_uri + "_scaler")
 
         if (!found_labels)
         {

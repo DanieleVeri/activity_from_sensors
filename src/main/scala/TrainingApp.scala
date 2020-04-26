@@ -29,6 +29,7 @@ object TrainingApp
         val joined = acc_features.join(gyr_features)
 
         println(s"found ${joined.count()} samples")
+        //joined.coalesce().
 
         val struct = StructType(StructField("string_label", StringType) ::
             StructField("base_features", VectorType) :: Nil)

@@ -38,8 +38,8 @@ object StreamingApp
         val acc_stream = stream.filter(s => s.endsWith("ACC"))
         val gyr_stream = stream.filter(s => s.endsWith("GYR"))
 
-        val acc_windows = acc_stream.window(Seconds(10), Seconds(7))
-        val gyr_windows = gyr_stream.window(Seconds(10), Seconds(7))
+        val acc_windows = acc_stream.window(Seconds(10), Seconds(10))
+        val gyr_windows = gyr_stream.window(Seconds(10), Seconds(10))
 
         val preprocessor = Preprocessing.get_preprocessor(ss, parsed_args.preprocess_type, parsed_args.partitions)
 
@@ -49,7 +49,7 @@ object StreamingApp
         val model = Model.get_model(parsed_args.classifier_type, parsed_args.model_uri, parsed_args.label_uri)
         val broadcast_model = ssc.sparkContext.broadcast(model)
 
-        val struct = StructType(StructField("user", StringType) :: StructField("features", VectorType) :: Nil)
+        val struct = StructType(StructField("user", StringType) :: StructField("base_features", VectorType) :: Nil)
 
         val predicted_stream = acc_features.join(gyr_features).transform(batch => {
             val data = ss.createDataFrame(batch.map(it => Row(it._1, Vectors.dense(it._2._1 ++ it._2._2))), struct)
@@ -57,8 +57,9 @@ object StreamingApp
             result.select("user", "predictedLabel").rdd
         })
 
+
         predicted_stream.print()
-        predicted_stream.saveAsTextFiles(parsed_args.out_uri, ss.sparkContext.applicationId)
+        //predicted_stream.saveAsTextFiles(parsed_args.out_uri, ss.sparkContext.applicationId)
 
         ssc.start()
         ssc.awaitTermination()

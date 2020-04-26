@@ -2,13 +2,13 @@
 
 SPARK_DIR=$1
 
-CLASSIFIER_PARAM="./params/mlp_60"
-REV_LABEL="./params/labels"
+CLASSIFIER_PARAM="./params/mlp_96"
+LABELS="./params/labels"
 HOST="localhost"
-PORT=7777
+PORT=7778
 PREPROCESS_KIND="core"
 MODEL_KIND="mlp"
-OUT_FILE="./data/processed_stream"
+OUT_FILE="./data/output/processed_stream"
 PARTITIONS=100
 
 $SPARK_DIR/bin/spark-submit                                             \
@@ -19,5 +19,5 @@ $SPARK_DIR/bin/spark-submit                                             \
     --conf spark.serializer=org.apache.spark.serializer.KryoSerializer  \
     --class "StreamingApp"                                              \
     target/scala-2.11/activity_from_sensors_2.11-1.0.jar                \
-    $HOST $PORT $CLASSIFIER_PARAM $REV_LABEL                            \
+    $HOST $PORT $CLASSIFIER_PARAM $LABELS                               \
     $PREPROCESS_KIND $MODEL_KIND $OUT_FILE $PARTITIONS

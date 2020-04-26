@@ -2,7 +2,7 @@
 
 SPARK_DIR=$1
 
-CLASSIFIER_PARAM="./params/mlp_23_04"
+CLASSIFIER_PARAM="./params/mlp_96"
 LABELS="./params/labels"
 ACC_FILE="./data/acc_train.csv"
 GYR_FILE="./data/gyr_train.csv"
@@ -13,7 +13,7 @@ PARTITIONS=100
 $SPARK_DIR/bin/spark-submit                                             \
     --deploy-mode client                                                \
     --master local[4]                                                   \
-    --driver-memory 4g                                                  \
+    --driver-memory 10g                                                  \
     --supervise                                                         \
     --conf spark.ui.port=36000                                          \
     --conf spark.serializer=org.apache.spark.serializer.KryoSerializer  \

@@ -36,11 +36,11 @@ class PreprocessingWithCore(val sc: SparkContext,
     {
         val array = batch.map(row => row.split(','))
         val name_label = array.map(arr => {
-            arr(6) = arr(6).concat(s"(${arr(9)})")
+            arr(6) = arr(6).concat(s" with ${arr(8)} does ${arr(9)}")
             arr
         })
 
-        // group by: user
+        // group by: user and device
         val features = compute_variance[String](name_label, fields => fields(6))
         features.persist(storage_level)
     }

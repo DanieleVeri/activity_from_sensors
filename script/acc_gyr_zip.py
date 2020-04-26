@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import argparse
 import pandas as pd
 
-in_acc_file = "../data/acc_test.csv"
-in_gyr_file = "../data/gyr_test.csv"
-out_combined_file = "../data/accgyr_stream.csv"
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-f1','--file1', help='first file to merge')
+parser.add_argument('-f2','--file2', help='secodnd file to merge')
+parser.add_argument('-f2o','--fileo', help='output file')
+
+in_acc_file = parser.file1
+in_gyr_file = parser.file2
+out_combined_file = parser.fileo
 
 names = "Index,Arrival_Time,Creation_Time,x,y,z,User,Model,Device,gt,Type".split(',')
 

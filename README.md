@@ -12,9 +12,9 @@ They both run in local or cloud mode via bash scripts, provided the spark instal
 
 `script/run_local_training.sh /path/to/spark`
 
- or **AWS Elastic Map Reduce** IAAS, see below.
+ or **AWS Elastic Map Reduce** platform, see below.
 
-`script/run_emr_training.sh /path/to/spark`
+`script/run_emr_training.sh`
 
 Our best MLP model achieves **96%** and more accuracy on unseen data.
 

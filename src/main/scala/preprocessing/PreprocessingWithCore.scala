@@ -40,7 +40,7 @@ class PreprocessingWithCore(val sc: SparkContext,
             arr
         })
 
-        // group by: user and device
+        // group by: user
         val features = compute_variance[String](name_label, fields => fields(6))
         features.persist(storage_level)
     }

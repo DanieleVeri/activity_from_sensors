@@ -1,3 +1,6 @@
+import java.io.PrintWriter
+import java.net.Socket
+
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.Vectors
@@ -7,6 +10,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.Seconds
 import preprocessing.Preprocessing
 import classification.Model
+import org.apache.spark.streaming.dstream.DStream
 
 
 object StreamingApp
@@ -21,31 +25,20 @@ object StreamingApp
         val ss = SparkSession.builder().config(conf).getOrCreate()
         val ssc = new StreamingContext(ss.sparkContext, Seconds(1))
 
-        // with checkpoint recovery
-        /*
-        val checkpointDir = "file:///home/dan/activity_from_sensors/checkpoints"
-        def createStreamingContext() = {
-            val sc = new SparkContext(conf)
-            val ssc = new StreamingContext(sc, Seconds(1))
-            ssc.checkpoint(checkpointDir)
-            ssc
-        }
-        val ssc = StreamingContext.getOrCreate(checkpointDir, createStreamingContext)
-        */
-
         val stream = ssc.socketTextStream(parsed_args.server_host, parsed_args.server_port)
 
         val acc_stream = stream.filter(s => s.endsWith("ACC"))
         val gyr_stream = stream.filter(s => s.endsWith("GYR"))
 
-        val acc_windows = acc_stream.window(Seconds(10), Seconds(10))
-        val gyr_windows = gyr_stream.window(Seconds(10), Seconds(10))
+        val acc_windows = acc_stream.window(Seconds(10), Seconds(5))
+        val gyr_windows = gyr_stream.window(Seconds(10), Seconds(5))
 
+        // preprocessing
         val preprocessor = Preprocessing.get_preprocessor(ss, parsed_args.preprocess_type, parsed_args.partitions)
-
         val acc_features = acc_windows.transform(batch => preprocessor.extract_streaming_features(batch))
         val gyr_features = gyr_windows.transform(batch => preprocessor.extract_streaming_features(batch))
 
+        // classifier model (broadcasted to workers)
         val model = Model.get_model(parsed_args.classifier_type, parsed_args.model_uri, parsed_args.label_uri)
         val broadcast_model = ssc.sparkContext.broadcast(model)
 
@@ -57,12 +50,28 @@ object StreamingApp
             result.select("user", "predictedLabel").rdd
         })
 
-
+        // output
         predicted_stream.print()
-        //predicted_stream.saveAsTextFiles(parsed_args.out_uri, ss.sparkContext.applicationId)
+        predicted_stream.saveAsTextFiles(parsed_args.out_uri, ss.sparkContext.applicationId)
+        stream_to_socket(predicted_stream)
 
+        // start streaming process
         ssc.start()
         ssc.awaitTermination()
+    }
+
+    def stream_to_socket(stream: DStream[Row]): Unit = {
+        stream.foreachRDD { rdd =>
+            rdd.foreachPartition { partition =>
+                if(partition.nonEmpty) {
+                    val connection = new Socket("localhost", 8888)
+                    val writer = new PrintWriter(connection.getOutputStream)
+                    partition.foreach(record => writer.println(record))
+                    writer.close()
+                    connection.close()
+                }
+            }
+        }
     }
 
     class ArgsParser(args: Array[String]) {

@@ -108,9 +108,12 @@ a sliding window of this size is computed every 5s for smoother response.
 ___
 ### 6. AWS deployment
 
-- benchmarks same app with more workers
+- training data is stored on amazon S3 file system and accessed directly by TrainingApp
+- StreamingApp listens on TCP port for files to classify, for this reason `server_stream.py` runs on ec2 istance, serving one or multiple test files to socket
+- classification results can be seen live on port 8888, and are available as `DStream`
+
 ___
-### 7. Overcome challenges
+### 7. Challenges
 
 - collections operations optimization (GC, groupby vs reducebykey)
 - code refactoring

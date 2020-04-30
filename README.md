@@ -50,11 +50,15 @@ Index,Arrival_Time,Creation_Time,x,y,z,User,Model,Device,gt
 ___
 ### 2. Time series Classification
 
+<img align="right" width="160" height="300" src="img/statistics.jpg">
+
 To extract valuable features a window approach is used:
 the dataset is grouped in 10 seconds windows.
+
 5 statistics are then computed for each sensor axis and window:
 
-<img align="right" width="160" height="300" src="img/statistics.jpg">
+
+
 
 - Mean 
 - Variance 

@@ -54,13 +54,15 @@ To extract valuable features a window approach is used:
 the dataset is grouped in 10 seconds windows.
 5 statistics are then computed for each sensor axis and window:
 
+<img align="right" width="160" height="300" src="img/statistics.jpg">
+
 - Mean 
 - Variance 
 - Covariance
 - Skewness (measures distribution asymmetry)
 - Kurtosis  (measures outliers)
 
-<img align="right" width="300" height="160" src="img/statistics.jpg">
+
 
 
 The latter 2 standard moments measure distribution asymmetry (skew), and tail relevance (kurtosis).

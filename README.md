@@ -60,6 +60,10 @@ the dataset is grouped in 10 seconds windows.
 - Skewness (measures distribution asymmetry)
 - Kurtosis  (measures outliers)
 
+![img](img/statistics.jpg)
+<img align="right" width="100" height="100" src="http://www.fillmurray.com/100/100">
+
+
 The latter 2 standard moments measure distribution asymmetry (skew), and tail relevance (kurtosis).
 The introduction of these alone raises accuracy from 93% to 96% approx.
 

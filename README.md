@@ -60,7 +60,7 @@ the dataset is grouped in 10 seconds windows.
 - Skewness (measures distribution asymmetry)
 - Kurtosis  (measures outliers)
 
-<img align="right" width="300" height="160" src="img/statistics.pnj">
+<img align="right" width="300" height="160" src="img/statistics.jpg">
 
 
 The latter 2 standard moments measure distribution asymmetry (skew), and tail relevance (kurtosis).
